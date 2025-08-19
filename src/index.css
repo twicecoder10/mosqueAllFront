@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+==========================================================================
+ASSALATUR RAHMAN ISLAMIC ASSOCIATION - THEME PALETTE
+==========================================================================
+Comprehensive theme system for easy color customization.
+All colors use HSL format for better manipulation.
+
+TO CHANGE THE THEME:
+1. Update the primary brand colors below
+2. The entire app will automatically use the new colors
+3. All gradients and shadows will adapt automatically
+*/
+
+@layer base {
+  :root {
+    /* =================================
+       BRAND COLORS - Change these to update the entire theme
+       ================================= */
+    
+    /* Primary Islamic Green Palette */
+    --brand-primary-hue: 158;
+    --brand-primary-saturation: 64%;
+    --brand-primary-lightness: 25%;
+    
+    /* Secondary Gold Palette */
+    --brand-secondary-hue: 45;
+    --brand-secondary-saturation: 93%;
+    --brand-secondary-lightness: 47%;
+    
+    /* =================================
+       SEMANTIC COLOR TOKENS - Built from brand colors
+       ================================= */
+    
+    /* Background & Surface Colors */
+    --background: 0 0% 100%;
+    --surface: 0 0% 99%;
+    --surface-hover: 158 15% 97%;
+    --foreground: var(--brand-primary-hue) 30% 15%;
+    
+    /* Card & Container Colors */
+    --card: var(--background);
+    --card-foreground: var(--foreground);
+    --card-border: var(--brand-primary-hue) 20% 92%;
+    
+    /* Popover & Overlay Colors */
+    --popover: var(--background);
+    --popover-foreground: var(--foreground);
+    
+    /* Primary Color Variations */
+    --primary: var(--brand-primary-hue) var(--brand-primary-saturation) var(--brand-primary-lightness);
+    --primary-foreground: 0 0% 98%;
+    --primary-light: var(--brand-primary-hue) 55% 35%;
+    --primary-dark: var(--brand-primary-hue) 70% 20%;
+    --primary-subtle: var(--brand-primary-hue) 35% 95%;
+    
+    /* Secondary/Gold Color Variations */
+    --secondary: var(--brand-secondary-hue) var(--brand-secondary-saturation) var(--brand-secondary-lightness);
+    --secondary-foreground: var(--brand-primary-hue) 30% 15%;
+    --gold: 43 96% 56%;
+    --gold-light: 48 100% 67%;
+    --gold-dark: 38 85% 45%;
+    --gold-subtle: 45 85% 95%;
+    
+    /* Neutral Color Scale */
+    --muted: var(--brand-primary-hue) 15% 96%;
+    --muted-foreground: var(--brand-primary-hue) 15% 45%;
+    --muted-dark: var(--brand-primary-hue) 20% 90%;
+    
+    /* Interactive Colors */
+    --accent: var(--brand-primary-hue) 25% 93%;
+    --accent-foreground: var(--brand-primary-hue) 30% 15%;
+    --accent-hover: var(--brand-primary-hue) 30% 88%;
+    
+    /* State Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-subtle: 0 85% 95%;
+    
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --success-subtle: 142 85% 95%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --warning-subtle: 38 85% 95%;
+    
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 98%;
+    --info-subtle: 217 85% 95%;
+    
+    /* Border & Input Colors */
+    --border: var(--brand-primary-hue) 20% 90%;
+    --border-hover: var(--brand-primary-hue) 30% 80%;
+    --input: var(--brand-primary-hue) 20% 95%;
+    --input-border: var(--brand-primary-hue) 25% 85%;
+    --ring: var(--primary);
+    
+    /* Layout Properties */
+    --radius: 0.75rem;
+    --radius-sm: 0.5rem;
+    --radius-lg: 1rem;
+    
+    /* =================================
+       ISLAMIC DESIGN GRADIENTS
+       ================================= */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-light)));
+    --gradient-gold: linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-light)));
+    --gradient-islamic: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--gold)) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 50%, hsl(var(--gold)) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--surface)));
+    --gradient-surface: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--surface)) 100%);
+    
+    /* =================================
+       ELEVATION & SHADOWS
+       ================================= */
+    --shadow-sm: 0 1px 2px 0 hsl(var(--primary) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--primary) / 0.1), 0 2px 4px -1px hsl(var(--primary) / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--primary) / 0.1), 0 4px 6px -2px hsl(var(--primary) / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--primary) / 0.1), 0 10px 10px -5px hsl(var(--primary) / 0.04);
+    --shadow-2xl: 0 25px 50px -12px hsl(var(--primary) / 0.25);
+    
+    /* Islamic-themed shadows */
+    --shadow-mosque: 0 20px 40px -10px hsl(var(--primary) / 0.3);
+    --shadow-card: 0 8px 32px -8px hsl(var(--primary) / 0.15);
+    --shadow-gold: 0 8px 32px -8px hsl(var(--gold) / 0.25);
+    --shadow-glow: 0 0 40px hsl(var(--primary-light) / 0.4);
+    
+    /* =================================
+       ANIMATION & TRANSITIONS
+       ================================= */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* =================================
+     DARK MODE THEME (Optional)
+     ================================= */
+  .dark {
+    /* Background & Surface Colors */
+    --background: var(--brand-primary-hue) 84% 4%;
+    --surface: var(--brand-primary-hue) 80% 6%;
+    --surface-hover: var(--brand-primary-hue) 70% 8%;
+    --foreground: 0 0% 98%;
+    
+    /* Card & Container Colors */
+    --card: var(--brand-primary-hue) 84% 4%;
+    --card-foreground: 0 0% 98%;
+    --card-border: var(--brand-primary-hue) 50% 15%;
+    
+    /* Popover & Overlay Colors */
+    --popover: var(--brand-primary-hue) 84% 4%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Primary Color Variations (inverted for dark mode) */
+    --primary: 0 0% 98%;
+    --primary-foreground: var(--brand-primary-hue) 47% 11%;
+    --primary-light: 0 0% 95%;
+    --primary-dark: 0 0% 90%;
+    --primary-subtle: var(--brand-primary-hue) 50% 15%;
+    
+    /* Secondary/Gold Colors */
+    --secondary: var(--brand-primary-hue) 33% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --gold: var(--brand-secondary-hue) var(--brand-secondary-saturation) var(--brand-secondary-lightness);
+    --gold-light: 48 100% 67%;
+    --gold-dark: 38 85% 45%;
+    --gold-subtle: var(--brand-primary-hue) 50% 15%;
+    
+    /* Neutral Color Scale */
+    --muted: var(--brand-primary-hue) 33% 18%;
+    --muted-foreground: var(--brand-primary-hue) 20% 65%;
+    --muted-dark: var(--brand-primary-hue) 40% 12%;
+    
+    /* Interactive Colors */
+    --accent: var(--brand-primary-hue) 37% 16%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: var(--brand-primary-hue) 40% 20%;
+    
+    /* State Colors (adjusted for dark mode) */
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
+    --destructive-subtle: 0 40% 15%;
+    
+    --success: 142 70% 25%;
+    --success-foreground: 0 0% 98%;
+    --success-subtle: 142 40% 15%;
+    
+    --warning: 38 85% 40%;
+    --warning-foreground: 0 0% 98%;
+    --warning-subtle: 38 40% 15%;
+    
+    --info: 217 85% 50%;
+    --info-foreground: 0 0% 98%;
+    --info-subtle: 217 40% 15%;
+    
+    /* Border & Input Colors */
+    --border: var(--brand-primary-hue) 33% 18%;
+    --border-hover: var(--brand-primary-hue) 40% 25%;
+    --input: var(--brand-primary-hue) 33% 18%;
+    --input-border: var(--brand-primary-hue) 40% 25%;
+    --ring: var(--brand-primary-hue) 27% 84%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Custom button variants for Islamic theme */
+  .btn-hero {
+    @apply bg-gradient-to-r from-primary to-primary-light text-primary-foreground hover:from-primary-light hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+  
+  .btn-gold {
+    @apply bg-gradient-to-r from-gold to-gold-light text-primary hover:from-gold-light hover:to-gold shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+  
+  /* Islamic glow animation */
+  .animate-islamic-glow {
+    animation: islamic-glow 3s ease-in-out infinite;
+  }
+  
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out;
+  }
+  
+  /* Line clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
