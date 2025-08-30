@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { apiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
 const VerificationRequired = () => {
@@ -15,12 +16,16 @@ const VerificationRequired = () => {
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState(searchParams.get('email') || '');
   const [isResent, setIsResent] = useState(false);
+  const { verifyEmail } = useAuth();
+
+  // Check if user is coming from registration (has email in URL)
+  const isFromRegistration = !!searchParams.get('email');
 
   // Send verification email mutation
   const sendVerificationMutation = useMutation({
     mutationFn: (email: string) => apiService.sendVerificationEmail(email),
     onSuccess: () => {
-      toast.success('Verification email sent successfully!');
+      toast.success(isFromRegistration ? 'Verification email resent successfully!' : 'Verification email sent successfully!');
       setIsResent(true);
     },
     onError: (error: any) => {
@@ -30,12 +35,18 @@ const VerificationRequired = () => {
 
   // Verify email mutation
   const verifyEmailMutation = useMutation({
-    mutationFn: (token: string) => apiService.verifyEmail(token),
+    mutationFn: (token: string) => verifyEmail(token),
     onSuccess: (data) => {
-      toast.success('Email verified successfully!');
-      // Store the auth token and redirect to dashboard
-      localStorage.setItem('token', data.token);
-      navigate('/dashboard');
+      toast.success('Email verified successfully! You are now signed in.');
+      // Redirect based on user role
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
+        navigate(isAdmin ? '/admin/dashboard' : '/events?filter=ongoing');
+      } else {
+        navigate('/events?filter=ongoing');
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to verify email');
@@ -122,11 +133,23 @@ const VerificationRequired = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
+          {isFromRegistration && !isResent && (
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>
+                A verification email has been sent to your email address. Please check your inbox and click the verification link.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {isResent && (
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Verification email sent! Please check your inbox and click the verification link.
+                {isFromRegistration 
+                  ? 'Verification email resent! Please check your inbox and click the verification link.'
+                  : 'Verification email sent! Please check your inbox and click the verification link.'
+                }
               </AlertDescription>
             </Alert>
           )}
@@ -152,7 +175,7 @@ const VerificationRequired = () => {
               <Mail className="mr-2 h-4 w-4" />
               {sendVerificationMutation.isPending 
                 ? 'Sending...' 
-                : isResent 
+                : isFromRegistration || isResent 
                   ? 'Resend Verification Email' 
                   : 'Send Verification Email'
               }

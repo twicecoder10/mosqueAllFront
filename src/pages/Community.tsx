@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Users, Building2, Calendar, MapPin, Phone, Mail, Globe } from 'lucide-react';
+import { Users, Calendar, MapPin, Phone, Mail, Globe } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ const Community = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
+                  <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-5 w-5 object-contain" />
                   About Our Association
                 </CardTitle>
               </CardHeader>

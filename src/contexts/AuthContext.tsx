@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { User, AuthState, LoginCredentials, RegisterData, OTPVerification } from '@/types';
+import { apiService } from '@/services/api';
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   loginWithOTP: (otpData: OTPVerification) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<any>;
   logout: () => void;
   updateUser: (user: User) => void;
-  sendOTP: (phone: string) => Promise<void>;
+  sendOTP: (phone: string) => Promise<any>;
+  verifyEmail: (token: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,37 +76,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginCredentials) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      });
+      const response = await apiService.login(credentials);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        
-        // Handle account verification required error
-        if (errorData.message === 'Account not verified') {
-          // Redirect to verification page with email
-          window.location.href = `/verification-required?email=${encodeURIComponent(credentials.email)}`;
-          return;
-        }
-        
-        throw new Error(errorData.message || 'Login failed');
+      // Handle account verification required error
+      if (response.code === 'ACCOUNT_NOT_VERIFIED') {
+        // Redirect to verification page with email
+        window.location.href = `/verification-required?email=${encodeURIComponent(credentials.email || '')}`;
+        return;
       }
-      
-      const data = await response.json();
       
       // Normalize role to lowercase for consistent comparison
       const userData = {
-        ...data.data.user,
-        role: data.data.user.role?.toLowerCase()
+        ...response.data.user,
+        role: response.data.user.role?.toLowerCase()
       };
       
-      localStorage.setItem('auth_token', data.data.token);
+      localStorage.setItem('auth_token', response.data.token);
       localStorage.setItem('user_data', JSON.stringify(userData));
       
-      dispatch({ type: 'SET_TOKEN', payload: data.data.token });
+      dispatch({ type: 'SET_TOKEN', payload: response.data.token });
       dispatch({ type: 'SET_USER', payload: userData });
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -115,22 +105,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithOTP = async (otpData: OTPVerification) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/auth/login/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(otpData),
-      });
+      const response = await apiService.loginWithOTP(otpData);
       
-      if (!response.ok) throw new Error('OTP verification failed');
+      // Normalize role to lowercase for consistent comparison
+      const userData = {
+        ...response.data.user,
+        role: response.data.user.role?.toLowerCase()
+      };
       
-      const data = await response.json();
+      localStorage.setItem('auth_token', response.data.token);
+      localStorage.setItem('user_data', JSON.stringify(userData));
       
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
-      
-      dispatch({ type: 'SET_TOKEN', payload: data.token });
-      dispatch({ type: 'SET_USER', payload: data.user });
+      dispatch({ type: 'SET_TOKEN', payload: response.data.token });
+      dispatch({ type: 'SET_USER', payload: userData });
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
       throw error;
@@ -140,30 +127,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (data: RegisterData) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const response = await apiService.register(data);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+      // Only set user data if registration was successful and user is verified AND token is provided
+      if (response.data.user.isVerified && response.data.token) {
+        // Normalize role to lowercase for consistent comparison
+        const userData = {
+          ...response.data.user,
+          role: response.data.user.role?.toLowerCase()
+        };
+        
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user_data', JSON.stringify(userData));
+        
+        dispatch({ type: 'SET_TOKEN', payload: response.data.token });
+        dispatch({ type: 'SET_USER', payload: userData });
       }
       
-      const responseData = await response.json();
+      // Always reset loading state after registration
+      dispatch({ type: 'SET_LOADING', payload: false });
       
-      // Normalize role to lowercase for consistent comparison
-      const userData = {
-        ...responseData.data.user,
-        role: responseData.data.user.role?.toLowerCase()
-      };
-      
-      localStorage.setItem('auth_token', responseData.data.token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      dispatch({ type: 'SET_TOKEN', payload: responseData.data.token });
-      dispatch({ type: 'SET_USER', payload: userData });
+      return response;
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
       throw error;
@@ -172,17 +156,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sendOTP = async (phone: string) => {
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to send OTP');
-      
-      return await response.json();
+      const response = await apiService.sendOTP(phone);
+      return response;
     } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (token: string) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    try {
+      const response = await apiService.verifyEmail(token);
+      
+      // Normalize role to lowercase for consistent comparison
+      const userData = {
+        ...response.data.user,
+        role: response.data.user.role?.toLowerCase()
+      };
+      
+      localStorage.setItem('auth_token', response.data.token);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      
+      dispatch({ type: 'SET_TOKEN', payload: response.data.token });
+      dispatch({ type: 'SET_USER', payload: userData });
+      
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_LOADING', payload: false });
       throw error;
     }
   };
@@ -206,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateUser,
     sendOTP,
+    verifyEmail,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

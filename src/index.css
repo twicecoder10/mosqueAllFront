@@ -4,7 +4,7 @@
 
 /* 
 ==========================================================================
-ASSALATUR RAHMAN ISLAMIC ASSOCIATION - THEME PALETTE
+ASSALATUR RAHMAN ISLAMIC ASSOCIATION - BLUE THEME PALETTE
 ==========================================================================
 Comprehensive theme system for easy color customization.
 All colors use HSL format for better manipulation.
@@ -21,10 +21,10 @@ TO CHANGE THE THEME:
        BRAND COLORS - Change these to update the entire theme
        ================================= */
     
-    /* Primary Islamic Green Palette */
-    --brand-primary-hue: 158;
-    --brand-primary-saturation: 64%;
-    --brand-primary-lightness: 25%;
+    /* Primary Islamic Blue Palette */
+    --brand-primary-hue: 217;
+    --brand-primary-saturation: 91%;
+    --brand-primary-lightness: 60%;
     
     /* Secondary Gold Palette */
     --brand-secondary-hue: 45;
@@ -38,13 +38,13 @@ TO CHANGE THE THEME:
     /* Background & Surface Colors */
     --background: 0 0% 100%;
     --surface: 0 0% 99%;
-    --surface-hover: 158 15% 97%;
+    --surface-hover: 217 15% 97%;
     --foreground: var(--brand-primary-hue) 30% 15%;
     
     /* Card & Container Colors */
     --card: var(--background);
     --card-foreground: var(--foreground);
-    --card-border: var(--brand-primary-hue) 20% 92%;
+    --card-border: 217 20% 92%;
     
     /* Popover & Overlay Colors */
     --popover: var(--background);
@@ -66,14 +66,14 @@ TO CHANGE THE THEME:
     --gold-subtle: 45 85% 95%;
     
     /* Neutral Color Scale */
-    --muted: var(--brand-primary-hue) 15% 96%;
-    --muted-foreground: var(--brand-primary-hue) 15% 45%;
-    --muted-dark: var(--brand-primary-hue) 20% 90%;
+    --muted: 217 15% 96%;
+    --muted-foreground: 217 15% 45%;
+    --muted-dark: 217 20% 90%;
     
     /* Interactive Colors */
-    --accent: var(--brand-primary-hue) 25% 93%;
-    --accent-foreground: var(--brand-primary-hue) 30% 15%;
-    --accent-hover: var(--brand-primary-hue) 30% 88%;
+    --accent: 217 25% 93%;
+    --accent-foreground: 217 30% 15%;
+    --accent-hover: 217 30% 88%;
     
     /* State Colors */
     --destructive: 0 84% 60%;
@@ -93,10 +93,10 @@ TO CHANGE THE THEME:
     --info-subtle: 217 85% 95%;
     
     /* Border & Input Colors */
-    --border: var(--brand-primary-hue) 20% 90%;
-    --border-hover: var(--brand-primary-hue) 30% 80%;
-    --input: var(--brand-primary-hue) 20% 95%;
-    --input-border: var(--brand-primary-hue) 25% 85%;
+    --border: 217 20% 90%;
+    --border-hover: 217 30% 80%;
+    --input: 217 20% 95%;
+    --input-border: 217 25% 85%;
     --ring: var(--primary);
     
     /* Layout Properties */
@@ -159,44 +159,44 @@ TO CHANGE THE THEME:
      ================================= */
   .dark {
     /* Background & Surface Colors */
-    --background: var(--brand-primary-hue) 84% 4%;
-    --surface: var(--brand-primary-hue) 80% 6%;
-    --surface-hover: var(--brand-primary-hue) 70% 8%;
+    --background: 217 84% 4%;
+    --surface: 217 80% 6%;
+    --surface-hover: 217 70% 8%;
     --foreground: 0 0% 98%;
     
     /* Card & Container Colors */
-    --card: var(--brand-primary-hue) 84% 4%;
+    --card: 217 84% 4%;
     --card-foreground: 0 0% 98%;
-    --card-border: var(--brand-primary-hue) 50% 15%;
+    --card-border: 217 50% 15%;
     
     /* Popover & Overlay Colors */
-    --popover: var(--brand-primary-hue) 84% 4%;
+    --popover: 217 84% 4%;
     --popover-foreground: 0 0% 98%;
     
     /* Primary Color Variations (inverted for dark mode) */
     --primary: 0 0% 98%;
-    --primary-foreground: var(--brand-primary-hue) 47% 11%;
+    --primary-foreground: 217 47% 11%;
     --primary-light: 0 0% 95%;
     --primary-dark: 0 0% 90%;
-    --primary-subtle: var(--brand-primary-hue) 50% 15%;
+    --primary-subtle: 217 50% 15%;
     
     /* Secondary/Gold Colors */
-    --secondary: var(--brand-primary-hue) 33% 18%;
+    --secondary: 217 33% 18%;
     --secondary-foreground: 0 0% 98%;
     --gold: var(--brand-secondary-hue) var(--brand-secondary-saturation) var(--brand-secondary-lightness);
     --gold-light: 48 100% 67%;
     --gold-dark: 38 85% 45%;
-    --gold-subtle: var(--brand-primary-hue) 50% 15%;
+    --gold-subtle: 217 50% 15%;
     
     /* Neutral Color Scale */
-    --muted: var(--brand-primary-hue) 33% 18%;
-    --muted-foreground: var(--brand-primary-hue) 20% 65%;
-    --muted-dark: var(--brand-primary-hue) 40% 12%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 217 20% 65%;
+    --muted-dark: 217 40% 12%;
     
     /* Interactive Colors */
-    --accent: var(--brand-primary-hue) 37% 16%;
+    --accent: 217 37% 16%;
     --accent-foreground: 0 0% 98%;
-    --accent-hover: var(--brand-primary-hue) 40% 20%;
+    --accent-hover: 217 40% 20%;
     
     /* State Colors (adjusted for dark mode) */
     --destructive: 0 63% 31%;
@@ -216,11 +216,11 @@ TO CHANGE THE THEME:
     --info-subtle: 217 40% 15%;
     
     /* Border & Input Colors */
-    --border: var(--brand-primary-hue) 33% 18%;
-    --border-hover: var(--brand-primary-hue) 40% 25%;
-    --input: var(--brand-primary-hue) 33% 18%;
-    --input-border: var(--brand-primary-hue) 40% 25%;
-    --ring: var(--brand-primary-hue) 27% 84%;
+    --border: 217 33% 18%;
+    --border-hover: 217 40% 25%;
+    --input: 217 33% 18%;
+    --input-border: 217 40% 25%;
+    --ring: 217 27% 84%;
   }
 }
 

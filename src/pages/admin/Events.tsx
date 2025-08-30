@@ -172,12 +172,11 @@ const AdminEvents = () => {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="prayer">Prayer</SelectItem>
+                  <SelectItem value="lecture">Lecture</SelectItem>
+                  <SelectItem value="community">Community</SelectItem>
                   <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
                   <SelectItem value="charity">Charity</SelectItem>
-                  <SelectItem value="youth">Youth</SelectItem>
-                  <SelectItem value="women">Women</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -270,7 +269,7 @@ const AdminEvents = () => {
                       
                       <div className="flex items-center gap-2 text-sm">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.currentAttendees} / {event.maxAttendees} attendees</span>
+                        <span>{event.currentAttendees} / {event.maxAttendees || "N/A"} attendees</span>
                       </div>
                     </div>
 

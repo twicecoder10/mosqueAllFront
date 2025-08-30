@@ -1,11 +1,11 @@
 export interface User {
   id: string;
-  email: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
   firstName: string;
   lastName: string;
   gender: 'MALE' | 'FEMALE';
-  role: 'admin' | 'subadmin' | 'user';
+  role: 'ADMIN' | 'SUBADMIN' | 'USER';
   isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -85,6 +85,14 @@ export interface ApiResponse<T> {
   data: T;
   message: string;
   success: boolean;
+  code?: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  authMethod?: 'email' | 'phone';
+  message?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -118,13 +126,14 @@ export interface AttendanceFilters {
 }
 
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  phone?: string;
 }
 
 export interface RegisterData {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
   firstName: string;
   lastName: string;
   gender: 'MALE' | 'FEMALE';

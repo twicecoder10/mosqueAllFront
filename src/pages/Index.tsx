@@ -9,7 +9,6 @@ import {
   Clock, 
   MapPin, 
   Star,
-  Building2,
   BookOpen,
   Handshake
 } from 'lucide-react';
@@ -33,7 +32,7 @@ const Index = () => {
           <div className="animate-fade-in">
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-white/10 backdrop-blur-sm rounded-full animate-islamic-glow">
-                <Building2 className="h-16 w-16 text-white" />
+                <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-16 w-16 object-contain" />
               </div>
             </div>
             

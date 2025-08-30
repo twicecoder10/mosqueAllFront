@@ -99,8 +99,14 @@ const EventDetails = () => {
 
   const canRegister = () => {
     if (!event || !user) return false;
+    
+    // If event doesn't require registration, don't show registration button
+    if (!event.registrationRequired) {
+      return false;
+    }
+    
     const status = getEventStatus();
-    return status === 'upcoming' && event.registrationRequired && !userRegistration;
+    return status === 'upcoming' && !userRegistration;
   };
 
   const canCancel = () => {
@@ -254,7 +260,7 @@ const EventDetails = () => {
                         <div>
                           <p className="font-medium">Capacity</p>
                           <p className="text-sm text-muted-foreground">
-                            {event.currentAttendees} / {event.maxAttendees} attendees
+                            {event.currentAttendees} / {event.maxAttendees || "N/A"} attendees
                           </p>
                         </div>
                       </div>

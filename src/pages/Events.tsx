@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, Clock, MapPin, Search, Filter, Calendar, Users, ArrowRight, LogIn } from 'lucide-react';
 import { apiService } from '@/services/api';
@@ -11,14 +11,23 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { safeFormatDate } from '@/utils/dateUtils';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 const Events = () => {
   const { isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState<EventFilters>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<string>('all');
+
+  // Handle URL parameters for automatic filtering
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam && ['upcoming', 'ongoing', 'past'].includes(filterParam)) {
+      setSelectedTimeFilter(filterParam);
+    }
+  }, [searchParams]);
 
   const { data: eventsResponse, isLoading, error } = useQuery<PaginatedResponse<Event>>({
     queryKey: ['events', filters, searchTerm, selectedTimeFilter],
@@ -149,12 +158,11 @@ const Events = () => {
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="prayer">Prayer</SelectItem>
+                  <SelectItem value="lecture">Lecture</SelectItem>
+                  <SelectItem value="community">Community</SelectItem>
                   <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
                   <SelectItem value="charity">Charity</SelectItem>
-                  <SelectItem value="youth">Youth</SelectItem>
-                  <SelectItem value="women">Women</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="social">Social</SelectItem>
                 </SelectContent>
               </Select>
 

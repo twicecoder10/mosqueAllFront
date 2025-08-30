@@ -586,7 +586,7 @@ const AdminUsers = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
-                  <Select name="role" defaultValue={selectedUser.role?.toLowerCase() || 'user'}>
+                  <Select name="role" defaultValue={selectedUser.role?.toUpperCase() || 'USER'}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -642,13 +642,13 @@ const AdminUsers = () => {
                   id="invitePhone"
                   name="phone"
                   type="tel"
-                  placeholder="+1234567890"
+                  placeholder="07123456789"
                 />
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="inviteRole">Role</Label>
-                <Select name="role" defaultValue="user">
+                <Select name="role" defaultValue="USER">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

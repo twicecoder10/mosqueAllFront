@@ -6,71 +6,183 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Mail, Phone, Lock, Eye, EyeOff, User, UserCheck, Users } from 'lucide-react';
+import { Mail, Phone, Lock, Eye, EyeOff, User, UserCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
-const registerSchema = z.object({
+// Base schema for common fields
+const baseSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   gender: z.enum(['MALE', 'FEMALE'], { required_error: 'Please select your gender' }),
+  acceptTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
+});
+
+// Email registration schema
+const emailRegisterSchema = baseSchema.extend({
   email: z.string().email('Please enter a valid email address'),
-  phone: z.string().optional(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  acceptTerms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
-type RegisterForm = z.infer<typeof registerSchema>;
+// Phone registration schema
+const phoneRegisterSchema = baseSchema.extend({
+  phone: z.string().min(10, 'Please enter a valid phone number').refine((phone) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // UK phone number patterns:
+    // - 11 digits starting with 07 (mobile)
+    // - 11 digits starting with 01 (landline)
+    // - 10 digits starting with 7 (mobile without 0)
+    // - 10 digits starting with 1 (landline without 0)
+    // - 12 digits starting with 44 (international format)
+    const ukPhonePattern = /^(44|0)?(7[0-9]{9}|1[0-9]{9}|2[0-9]{9}|3[0-9]{9}|5[0-9]{9}|8[0-9]{9}|9[0-9]{9})$/;
+    
+    return ukPhonePattern.test(cleanPhone);
+  }, 'Please enter a valid UK phone number'),
+});
+
+type EmailRegisterForm = z.infer<typeof emailRegisterSchema>;
+type PhoneRegisterForm = z.infer<typeof phoneRegisterSchema>;
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [registrationMethod, setRegistrationMethod] = useState<'email' | 'phone'>('phone');
   const navigate = useNavigate();
   const { register } = useAuth();
 
-  const form = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+  const emailForm = useForm<EmailRegisterForm>({
+    resolver: zodResolver(emailRegisterSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
       gender: undefined,
       email: '',
-      phone: '',
       password: '',
       confirmPassword: '',
       acceptTerms: false,
     },
   });
 
-  const onSubmit = async (data: RegisterForm) => {
+  const phoneForm = useForm<PhoneRegisterForm>({
+    resolver: zodResolver(phoneRegisterSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      gender: undefined,
+      phone: '',
+      acceptTerms: false,
+    },
+  });
+
+  const onEmailSubmit = async (data: EmailRegisterForm) => {
     setIsLoading(true);
     try {
-      await register(data);
-      toast.success('Account created successfully! Welcome to our community.');
-      // Redirect based on user role
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const user = JSON.parse(userData);
-        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
-        navigate(isAdmin ? '/admin/dashboard' : '/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      const response = await register(data);
+      
+      toast.success('Account created! Please check your email for verification link to complete registration.');
+      navigate(`/verification-required?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const onPhoneSubmit = async (data: PhoneRegisterForm) => {
+    setIsLoading(true);
+    try {
+      const response = await register(data);
+      
+      toast.success('Account created! Please check your phone for OTP to complete login.');
+      // Use window.location.href for a fresh page load to avoid state conflicts
+      window.location.href = `/login?phone=${encodeURIComponent(data.phone)}&tab=otp`;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Common fields component
+  const CommonFields = ({ form, isEmailForm }: { form: any, isEmailForm: boolean }) => (
+    <>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor={`firstName-${isEmailForm ? 'email' : 'phone'}`}>First Name</Label>
+          <div className="relative">
+            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id={`firstName-${isEmailForm ? 'email' : 'phone'}`}
+              placeholder="First name"
+              className="pl-10"
+              {...form.register('firstName')}
+            />
+          </div>
+          {form.formState.errors.firstName && (
+            <Alert variant="destructive" className="py-2">
+              <AlertDescription>
+                {form.formState.errors.firstName.message}
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`lastName-${isEmailForm ? 'email' : 'phone'}`}>Last Name</Label>
+          <div className="relative">
+            <UserCheck className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              id={`lastName-${isEmailForm ? 'email' : 'phone'}`}
+              placeholder="Last name"
+              className="pl-10"
+              {...form.register('lastName')}
+            />
+          </div>
+          {form.formState.errors.lastName && (
+            <Alert variant="destructive" className="py-2">
+              <AlertDescription>
+                {form.formState.errors.lastName.message}
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`gender-${isEmailForm ? 'email' : 'phone'}`}>Gender</Label>
+        <div className="relative">
+          <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Select onValueChange={(value) => form.setValue('gender', value as 'MALE' | 'FEMALE')}>
+            <SelectTrigger className="pl-10">
+              <SelectValue placeholder="Select your gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="MALE">Male</SelectItem>
+              <SelectItem value="FEMALE">Female</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {form.formState.errors.gender && (
+          <Alert variant="destructive" className="py-2">
+            <AlertDescription>
+              {form.formState.errors.gender.message}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-gold/5 flex items-center justify-center p-4">
@@ -79,7 +191,7 @@ const Register = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-gradient-islamic rounded-full">
-              <Building2 className="h-8 w-8 text-white" />
+              <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-primary mb-2">Assalatur Rahman</h1>
@@ -90,215 +202,197 @@ const Register = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Join Our Community</CardTitle>
             <CardDescription>
-              Create your account to start your journey with us
+              Choose your preferred sign-up method
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="firstName"
-                      placeholder="First name"
-                      className="pl-10"
-                      {...form.register('firstName')}
-                    />
+            <Tabs value={registrationMethod} onValueChange={setRegistrationMethod} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="phone" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Phone
+                </TabsTrigger>
+                <TabsTrigger value="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="phone">
+                <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
+                  <CommonFields form={phoneForm} isEmailForm={false} />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="07123456789 or +447123456789"
+                        className="pl-10"
+                        {...phoneForm.register('phone')}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Enter your UK phone number with or without country code (+44)
+                    </p>
+                    {phoneForm.formState.errors.phone && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertDescription>
+                          {phoneForm.formState.errors.phone.message}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
-                  {form.formState.errors.firstName && (
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="acceptTerms-phone"
+                      checked={phoneForm.watch('acceptTerms')}
+                      onCheckedChange={(checked) => phoneForm.setValue('acceptTerms', !!checked)}
+                    />
+                    <Label htmlFor="acceptTerms-phone" className="text-sm">
+                      I accept the{' '}
+                      <Link to="/terms" className="text-primary hover:underline">
+                        terms and conditions
+                      </Link>
+                    </Label>
+                  </div>
+                  {phoneForm.formState.errors.acceptTerms && (
                     <Alert variant="destructive" className="py-2">
                       <AlertDescription>
-                        {form.formState.errors.firstName.message}
+                        {phoneForm.formState.errors.acceptTerms.message}
                       </AlertDescription>
                     </Alert>
                   )}
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <div className="relative">
-                    <UserCheck className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="lastName"
-                      placeholder="Last name"
-                      className="pl-10"
-                      {...form.register('lastName')}
-                    />
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating Account...' : 'Sign Up with Phone'}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="email">
+                <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+                  <CommonFields form={emailForm} isEmailForm={true} />
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className="pl-10"
+                        {...emailForm.register('email')}
+                      />
+                    </div>
+                    {emailForm.formState.errors.email && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertDescription>
+                          {emailForm.formState.errors.email.message}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
-                  {form.formState.errors.lastName && (
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password"
+                        className="pl-10 pr-10"
+                        {...emailForm.register('password')}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    {emailForm.formState.errors.password && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertDescription>
+                          {emailForm.formState.errors.password.message}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        className="pl-10 pr-10"
+                        {...emailForm.register('confirmPassword')}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    {emailForm.formState.errors.confirmPassword && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertDescription>
+                          {emailForm.formState.errors.confirmPassword.message}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="acceptTerms-email"
+                      checked={emailForm.watch('acceptTerms')}
+                      onCheckedChange={(checked) => emailForm.setValue('acceptTerms', !!checked)}
+                    />
+                    <Label htmlFor="acceptTerms-email" className="text-sm">
+                      I accept the{' '}
+                      <Link to="/terms" className="text-primary hover:underline">
+                        terms and conditions
+                      </Link>
+                    </Label>
+                  </div>
+                  {emailForm.formState.errors.acceptTerms && (
                     <Alert variant="destructive" className="py-2">
                       <AlertDescription>
-                        {form.formState.errors.lastName.message}
+                        {emailForm.formState.errors.acceptTerms.message}
                       </AlertDescription>
                     </Alert>
                   )}
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Select onValueChange={(value) => form.setValue('gender', value as 'MALE' | 'FEMALE')}>
-                    <SelectTrigger className="pl-10">
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MALE">Male</SelectItem>
-                      <SelectItem value="FEMALE">Female</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {form.formState.errors.gender && (
-                  <Alert variant="destructive" className="py-2">
-                    <AlertDescription>
-                      {form.formState.errors.gender.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    className="pl-10"
-                    {...form.register('email')}
-                  />
-                </div>
-                {form.formState.errors.email && (
-                  <Alert variant="destructive" className="py-2">
-                    <AlertDescription>
-                      {form.formState.errors.email.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    className="pl-10"
-                    {...form.register('phone')}
-                  />
-                </div>
-                {form.formState.errors.phone && (
-                  <Alert variant="destructive" className="py-2">
-                    <AlertDescription>
-                      {form.formState.errors.phone.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a password"
-                    className="pl-10 pr-10"
-                    {...form.register('password')}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating Account...' : 'Sign Up with Email'}
                   </Button>
-                </div>
-                {form.formState.errors.password && (
-                  <Alert variant="destructive" className="py-2">
-                    <AlertDescription>
-                      {form.formState.errors.password.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm your password"
-                    className="pl-10 pr-10"
-                    {...form.register('confirmPassword')}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                {form.formState.errors.confirmPassword && (
-                  <Alert variant="destructive" className="py-2">
-                    <AlertDescription>
-                      {form.formState.errors.confirmPassword.message}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="acceptTerms"
-                  checked={form.watch('acceptTerms')}
-                  onCheckedChange={(checked) => form.setValue('acceptTerms', checked as boolean)}
-                />
-                <Label htmlFor="acceptTerms" className="text-sm">
-                  I agree to the{' '}
-                  <Link to="/terms" className="text-primary hover:underline">
-                    Terms and Conditions
-                  </Link>{' '}
-                  and{' '}
-                  <Link to="/privacy" className="text-primary hover:underline">
-                    Privacy Policy
-                  </Link>
-                </Label>
-              </div>
-              {form.formState.errors.acceptTerms && (
-                <Alert variant="destructive" className="py-2">
-                  <AlertDescription>
-                    {form.formState.errors.acceptTerms.message}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-              </Button>
-            </form>
+                </form>
+              </TabsContent>
+            </Tabs>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">

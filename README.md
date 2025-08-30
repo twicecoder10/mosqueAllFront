@@ -52,7 +52,7 @@ A comprehensive event management platform for the Assalatur Rahman Islamic Assoc
    ```
 
 5. **Open your browser**
-   Navigate to `http://localhost:5173`
+   Navigate to `http://localhost:8080`
 
 ## 🔗 Backend Integration
 
@@ -203,6 +203,8 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run preview      # Preview production build
 npm run lint         # Run ESLint
+npm run deploy       # Deploy to Vercel (production)
+npm run deploy:dev   # Deploy to Vercel (development)
 ```
 
 ### Environment Variables
@@ -228,9 +230,33 @@ npm run build
 
 The built files will be in the `dist/` directory, ready for deployment to any static hosting service.
 
+### Deploy to Vercel
+
+This project is configured for easy deployment on Vercel:
+
+#### Quick Deploy
+```bash
+npm run deploy
+```
+
+#### Development Deploy
+```bash
+npm run deploy:dev
+```
+
+#### Manual Deploy
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run: `vercel --prod`
+
+### Environment Variables for Production
+
+Set these environment variables in your Vercel project:
+
+- `VITE_API_URL`: Your production API URL (e.g., `https://your-api-domain.com/api`)
+
 ### Recommended Hosting
 
-- Vercel
+- **Vercel** (Recommended - configured and ready)
 - Netlify
 - AWS S3 + CloudFront
 - Firebase Hosting
@@ -256,8 +282,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For support and questions, please contact:
-- Email: admin@assalaturrahman.com
-- Phone: +44 20 XXXX XXXX
+- Email: hazeem@cosonas.co.uk
+- Phone: +44.........
 
 ---
 

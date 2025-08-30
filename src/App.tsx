@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import EventDetails from "./pages/EventDetails";
 import EventDetail from "./pages/EventDetail";
+import EventCheckin from "./pages/EventCheckin";
 import AdminEvents from "./pages/admin/Events";
 import AdminEventDetail from "./pages/admin/EventDetail";
 import CreateEvent from "./pages/admin/CreateEvent";
@@ -64,7 +65,7 @@ const ProtectedRoute = ({
   }
 
   if (requireAdmin && user?.role !== 'admin' && user?.role !== 'subadmin') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/events?filter=ongoing" replace />;
   }
 
   return <>{children}</>;
@@ -83,7 +84,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/events?filter=ongoing" replace />;
   }
 
   return <>{children}</>;
@@ -110,6 +111,7 @@ const AppRoutes = () => {
         </PublicRoute>
       } />
       <Route path="/accept-invitation" element={<AcceptInvitation />} />
+      <Route path="/register" element={<AcceptInvitation />} />
       <Route path="/verification-required" element={<VerificationRequired />} />
       <Route path="/verify-email" element={<VerificationRequired />} />
 
@@ -133,6 +135,7 @@ const AppRoutes = () => {
       } />
       <Route path="/community" element={<Community />} />
       <Route path="/events/:id" element={<EventDetail />} />
+      <Route path="/events/:eventId/checkin" element={<EventCheckin />} />
       <Route path="/event/:id" element={<EventDetails />} />
 
       {/* Protected Admin Routes */}

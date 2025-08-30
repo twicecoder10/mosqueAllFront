@@ -208,7 +208,7 @@ const MyRegistrations = () => {
                         
                         <div className="flex items-center gap-2 text-sm">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>{registration.event.currentAttendees} / {registration.event.maxAttendees} attendees</span>
+                          <span>{registration.event.currentAttendees} / {registration.event.maxAttendees || "N/A"} attendees</span>
                         </div>
                       </div>
                     </div>

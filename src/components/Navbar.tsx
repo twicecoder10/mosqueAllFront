@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
-  Building2, 
   Menu, 
   X, 
   CalendarDays, 
@@ -44,7 +43,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="p-2 bg-gradient-islamic rounded-lg group-hover:animate-islamic-glow transition-all">
-              <Building2 className="h-6 w-6 text-white" />
+              <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-6 w-6 object-contain" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-primary">Assalatur Rahman</h1>
@@ -56,6 +55,12 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
+                {isAdmin && (
+                  <Link to="/admin/dashboard" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                )}
                 <Link to="/events" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
                   <CalendarDays className="h-4 w-4" />
                   <span>Events</span>
@@ -64,12 +69,6 @@ const Navbar = () => {
                   <Users className="h-4 w-4" />
                   <span>Community</span>
                 </Link>
-                {isAdmin && (
-                  <Link to="/admin/dashboard" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
-                    <BarChart3 className="h-4 w-4" />
-                    <span>Admin</span>
-                  </Link>
-                )}
 
               </>
             ) : (

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '@/services/api';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import QRCodeManager from '@/components/QRCodeManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -465,7 +466,7 @@ const AdminEventDetail = () => {
                   <div>
                     <p className="font-medium">Capacity</p>
                     <p className="text-sm text-muted-foreground">
-                      {event.currentAttendees} / {event.maxAttendees} attendees
+                      {event.currentAttendees} / {event.maxAttendees || "N/A"} attendees
                     </p>
                     <div className="w-full bg-muted rounded-full h-2 mt-1">
                       <div 
@@ -517,6 +518,13 @@ const AdminEventDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* QR Code Management */}
+            <QRCodeManager 
+              eventId={id!} 
+              eventTitle={event.title} 
+              isAdmin={true} 
+            />
 
             {/* Quick Actions */}
             <Card>

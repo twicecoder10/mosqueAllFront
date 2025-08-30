@@ -14,7 +14,8 @@ import {
   DashboardStats,
   ExportOptions,
   PaginatedResponse,
-  ApiResponse
+  ApiResponse,
+  AuthResponse
 } from '@/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
@@ -38,25 +39,25 @@ class ApiService {
   }
 
   // Auth endpoints
-  async login(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
+  async login(credentials: { email: string; password: string }): Promise<ApiResponse<AuthResponse>> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(credentials),
     });
     return this.handleResponse(response);
   }
 
-  async loginWithOTP(phone: string, otp: string): Promise<ApiResponse<{ user: User; token: string }>> {
+  async loginWithOTP(credentials: { phone: string; otp: string }): Promise<ApiResponse<AuthResponse>> {
     const response = await fetch(`${API_BASE_URL}/auth/login/otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, otp }),
+      body: JSON.stringify(credentials),
     });
     return this.handleResponse(response);
   }
 
-  async register(userData: any): Promise<ApiResponse<{ user: User; token: string }>> {
+  async register(userData: any): Promise<ApiResponse<AuthResponse>> {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -99,7 +100,7 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async inviteUser(inviteData: { email: string; phone?: string; role: 'USER' | 'SUBADMIN' }): Promise<ApiResponse<Invitation>> {
+  async inviteUser(inviteData: { email?: string; phone?: string; role: 'USER' | 'SUBADMIN' }): Promise<ApiResponse<Invitation>> {
     const response = await fetch(`${API_BASE_URL}/users/invite`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
@@ -125,7 +126,7 @@ class ApiService {
   }
 
   async acceptInvitation(invitationData: InvitationAcceptance): Promise<ApiResponse<{ user: User; token: string }>> {
-    const response = await fetch(`${API_BASE_URL}/auth/invitations/accept`, {
+    const response = await fetch(`${API_BASE_URL}/auth/invitations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(invitationData),
@@ -142,14 +143,9 @@ class ApiService {
       ...(filters?.search && { search: filters.search }),
     });
 
-    console.log('Making API call to:', `${API_BASE_URL}/users?${params}`);
-    console.log('Auth headers:', this.getAuthHeaders());
-
     const response = await fetch(`${API_BASE_URL}/users?${params}`, {
       headers: this.getAuthHeaders(),
     });
-    
-    console.log('API response status:', response.status);
     
     return this.handleResponse(response);
   }
@@ -355,6 +351,76 @@ class ApiService {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
+    });
+    return this.handleResponse(response);
+  }
+
+  // QR Code endpoints
+  async generateQRCode(eventId: string, expirationHours?: number): Promise<ApiResponse<{
+    qrCode: string;
+    qrData: string;
+    frontendUrl: string;
+    expiresAt: string;
+    eventId: string;
+    type: string;
+  }>> {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/generate-qr`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ expirationHours }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async validateCheckinToken(eventId: string, token: string): Promise<ApiResponse<{
+    eventId: string;
+    eventTitle: string;
+    startDate: string;
+    endDate: string;
+    registrationRequired: boolean;
+    registrationDeadline: string | null;
+    maxAttendees: number | null;
+    currentAttendees: number;
+    isValid: boolean;
+    expiresAt: string;
+  }>> {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/validate-checkin-token?token=${encodeURIComponent(token)}`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return this.handleResponse(response);
+  }
+
+  async checkinWithToken(eventId: string, token: string): Promise<ApiResponse<Attendance>> {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/checkin-with-token`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ token }),
+    });
+    return this.handleResponse(response);
+  }
+
+  async getQRStatus(eventId: string): Promise<ApiResponse<{
+    id: string;
+    eventId: string;
+    type: string;
+    expiresAt: string;
+    createdAt: string;
+    event: {
+      title: string;
+      startDate: string;
+      endDate: string;
+    };
+  } | null>> {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/qr-status`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async revokeQRCode(eventId: string): Promise<ApiResponse<{ message: string }>> {
+    const response = await fetch(`${API_BASE_URL}/events/${eventId}/revoke-qr`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
     });
     return this.handleResponse(response);
   }

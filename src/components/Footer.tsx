@@ -1,4 +1,4 @@
-import { Building2, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -10,7 +10,7 @@ const Footer = () => {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-white/10 rounded-lg">
-                <Building2 className="h-6 w-6" />
+                <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-6 w-6 object-contain" />
               </div>
               <div>
                 <h3 className="text-lg font-bold">Assalatur Rahman</h3>

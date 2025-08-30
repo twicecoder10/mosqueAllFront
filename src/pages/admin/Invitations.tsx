@@ -61,8 +61,6 @@ const Invitations = () => {
       
       if (failedCount > 0) {
         toast.error(`${failedCount} invitation(s) failed. Check the details.`);
-        // Log failed invitations for debugging
-        console.log('Failed invitations:', failed);
       }
       
       queryClient.invalidateQueries({ queryKey: ['invitations'] });

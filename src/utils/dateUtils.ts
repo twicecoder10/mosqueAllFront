@@ -5,11 +5,11 @@ export const safeFormatDate = (dateString: string | Date, formatString: string):
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) {
-      return 'Invalid Date';
+      return 'N/A';
     }
     return format(date, formatString);
   } catch (error) {
-    return 'Invalid Date';
+    return 'N/A';
   }
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building2, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 
@@ -20,7 +20,19 @@ const emailLoginSchema = z.object({
 });
 
 const otpLoginSchema = z.object({
-  phone: z.string().min(10, 'Please enter a valid phone number'),
+  phone: z.string().min(10, 'Please enter a valid phone number').refine((phone) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // UK phone number patterns:
+    // - 11 digits starting with 07 (mobile)
+    // - 11 digits starting with 01 (landline)
+    // - 10 digits starting with 7 (mobile without 0)
+    // - 10 digits starting with 1 (landline without 0)
+    // - 12 digits starting with 44 (international format)
+    const ukPhonePattern = /^(44|0)?(7[0-9]{9}|1[0-9]{9}|2[0-9]{9}|3[0-9]{9}|5[0-9]{9}|8[0-9]{9}|9[0-9]{9})$/;
+    
+    return ukPhonePattern.test(cleanPhone);
+  }, 'Please enter a valid UK phone number'),
   otp: z.string().length(6, 'Please enter the 6-digit OTP'),
 });
 
@@ -32,9 +44,19 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'email' | 'otp'>('otp');
+  
+  // Reset loading states when component mounts
+  useEffect(() => {
+    setIsLoading(false);
+    setOtpLoading(false);
+    setOtpSent(false);
+  }, []);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, loginWithOTP, sendOTP } = useAuth();
 
+  // Initialize forms first
   const emailForm = useForm<EmailLoginForm>({
     resolver: zodResolver(emailLoginSchema),
     defaultValues: {
@@ -50,48 +72,6 @@ const Login = () => {
       otp: '',
     },
   });
-
-  const onEmailSubmit = async (data: EmailLoginForm) => {
-    setIsLoading(true);
-    try {
-      await login(data);
-      toast.success('Welcome back!');
-      // Redirect based on user role
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const user = JSON.parse(userData);
-        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
-        navigate(isAdmin ? '/admin/dashboard' : '/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onOTPSubmit = async (data: OTPLoginForm) => {
-    setIsLoading(true);
-    try {
-      await loginWithOTP(data);
-      toast.success('Welcome back!');
-      // Redirect based on user role
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        const user = JSON.parse(userData);
-        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
-        navigate(isAdmin ? '/admin/dashboard' : '/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'OTP verification failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSendOTP = async () => {
     const phone = otpForm.getValues('phone');
@@ -112,6 +92,101 @@ const Login = () => {
     }
   };
 
+  // Handle URL parameters for pre-filling phone and switching to OTP tab
+  useEffect(() => {
+    const phoneParam = searchParams.get('phone');
+    const tabParam = searchParams.get('tab');
+    
+    // Reset ALL states to ensure clean state
+    setOtpLoading(false);
+    setIsLoading(false);
+    setShowPassword(false);
+    
+    // Reset form values
+    emailForm.reset();
+    otpForm.reset();
+    
+    if (phoneParam) {
+      // Decode the phone number (handles %2B for + and other encoded characters)
+      const decodedPhone = decodeURIComponent(phoneParam);
+      // Use setTimeout to ensure form is ready
+      setTimeout(() => {
+        otpForm.setValue('phone', decodedPhone);
+      }, 100);
+      
+      // If we have a phone parameter and tab=otp, it means we're coming from registration
+      // The backend has already sent an OTP, so show the OTP input field
+      if (tabParam === 'otp') {
+        setOtpSent(true);
+        toast.success('OTP has been sent to your phone. Please enter the code to complete login.');
+      }
+    }
+    
+    if (tabParam === 'email') {
+      setActiveTab('email');
+    } else {
+      setActiveTab('otp');
+    }
+  }, [searchParams, otpForm, emailForm]);
+
+  const onEmailSubmit = async (data: EmailLoginForm) => {
+    setIsLoading(true);
+    try {
+      await login(data);
+      toast.success('Welcome back!');
+      
+      // Check for redirect parameter
+      const redirectParam = searchParams.get('redirect');
+      if (redirectParam) {
+        navigate(redirectParam);
+        return;
+      }
+      
+      // Redirect based on user role
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
+        navigate(isAdmin ? '/admin/dashboard' : '/events?filter=ongoing');
+      } else {
+        navigate('/events?filter=ongoing');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onOTPSubmit = async (data: OTPLoginForm) => {
+    setIsLoading(true);
+    try {
+      await loginWithOTP({ phone: data.phone, otp: data.otp });
+      toast.success('Welcome back!');
+      
+      // Check for redirect parameter
+      const redirectParam = searchParams.get('redirect');
+      if (redirectParam) {
+        navigate(redirectParam);
+        return;
+      }
+      
+      // Redirect based on user role
+      const userData = localStorage.getItem('user_data');
+      if (userData) {
+        const user = JSON.parse(userData);
+        const isAdmin = user?.role === 'admin' || user?.role === 'subadmin';
+        navigate(isAdmin ? '/admin/dashboard' : '/events?filter=ongoing');
+      } else {
+        navigate('/events?filter=ongoing');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'OTP verification failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-gold/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -119,7 +194,7 @@ const Login = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-gradient-islamic rounded-full">
-              <Building2 className="h-8 w-8 text-white" />
+              <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-primary mb-2">Assalatur Rahman</h1>
@@ -134,7 +209,7 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="email" className="w-full">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'email' | 'otp')} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
@@ -218,11 +293,14 @@ const Login = () => {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="Enter your phone number"
+                        placeholder="07123456789 or +447123456789"
                         className="pl-10"
                         {...otpForm.register('phone')}
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Enter your UK phone number with or without country code (+44)
+                    </p>
                     {otpForm.formState.errors.phone && (
                       <Alert variant="destructive" className="py-2">
                         <AlertDescription>

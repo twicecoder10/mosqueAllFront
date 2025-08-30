@@ -116,7 +116,7 @@ const Dashboard = () => {
               <Users className="h-4 w-4" />
               <span>
                 {event.currentAttendees}
-                {event.maxAttendees && ` / ${event.maxAttendees}`} attendees
+                {event.maxAttendees && ` / ${event.maxAttendees || "N/A"}`} attendees
               </span>
             </div>
           </div>

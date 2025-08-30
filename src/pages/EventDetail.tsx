@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarDays, Clock, MapPin, Users, ArrowLeft, Calendar, User, CheckCircle, XCircle, LogIn, Share2, Heart } from 'lucide-react';
 import { apiService } from '@/services/api';
 import PublicLayout from '@/components/layout/PublicLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -136,12 +137,13 @@ const EventDetail = () => {
 
   const canRegister = () => {
     if (!event || !isAuthenticated) return false;
-    const status = getEventStatus();
     
-    // For events that don't require registration, can register when ongoing
+    // If event doesn't require registration, don't show registration button
     if (!event.registrationRequired) {
-      return status === 'ongoing' && !userRegistration;
+      return false;
     }
+    
+    const status = getEventStatus();
     
     // For events that require registration
     if (event.registrationRequired) {
@@ -399,7 +401,7 @@ const EventDetail = () => {
                     <div>
                       <p className="font-medium">Capacity</p>
                       <p className="text-sm text-muted-foreground">
-                        {event.currentAttendees} / {event.maxAttendees} attendees
+                        {event.currentAttendees} / {event.maxAttendees || "N/A"} attendees
                       </p>
                       <div className="w-full bg-muted rounded-full h-2 mt-1">
                         <div 
@@ -499,6 +501,8 @@ const EventDetail = () => {
                 </CardContent>
               </Card>
             )}
+
+
 
             {/* Attendance Marked for Non-Registration Events */}
             {!userRegistration && eventStatus === 'ongoing' && !event.registrationRequired && userRegistration?.attendanceDate && (

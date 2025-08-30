@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, Mail, Phone, Lock, Eye, EyeOff, User, UserCheck, Users } from 'lucide-react';
+import { Mail, Phone, Lock, Eye, EyeOff, User, UserCheck, Users } from 'lucide-react';
 import { apiService } from '@/services/api';
 import { InvitationAcceptance } from '@/types';
 import { toast } from 'react-hot-toast';
@@ -18,13 +18,16 @@ const invitationSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   gender: z.enum(['MALE', 'FEMALE'], { required_error: 'Please select your gender' }),
-  email: z.string().email('Please enter a valid email address').optional(),
-  phone: z.string().optional(),
-  password: z.string().min(8, 'Password must be at least 8 characters').optional(),
-  confirmPassword: z.string().optional(),
+  email: z.string().email('Please enter a valid email address').optional().or(z.literal('')),
+  phone: z.string().optional().or(z.literal('')),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
 }).refine((data) => {
-  // At least one contact method is required
-  if (!data.email && !data.phone) {
+  // At least one contact method is required (handle empty strings)
+  const hasEmail = data.email && data.email.trim() !== '';
+  const hasPhone = data.phone && data.phone.trim() !== '';
+  
+  if (!hasEmail && !hasPhone) {
     return false;
   }
   return true;
@@ -32,14 +35,37 @@ const invitationSchema = z.object({
   message: "Either email or phone number is required",
   path: ["email"],
 }).refine((data) => {
-  // If password is provided, confirmPassword must match
-  if (data.password && data.password !== data.confirmPassword) {
+  // Password and confirmPassword must match
+  if (data.password !== data.confirmPassword) {
     return false;
   }
   return true;
 }, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
+}).refine((data) => {
+  const hasPhone = data.phone && data.phone.trim() !== '';
+  
+  if (hasPhone) {
+    // Remove all non-digit characters
+    const cleanPhone = data.phone.replace(/\D/g, '');
+    
+    // UK phone number patterns:
+    // - 11 digits starting with 07 (mobile)
+    // - 11 digits starting with 01 (landline)
+    // - 10 digits starting with 7 (mobile without 0)
+    // - 10 digits starting with 1 (landline without 0)
+    // - 12 digits starting with 44 (international format)
+    const ukPhonePattern = /^(44|0)?(7[0-9]{9}|1[0-9]{9}|2[0-9]{9}|3[0-9]{9}|5[0-9]{9}|8[0-9]{9}|9[0-9]{9})$/;
+    
+    if (!ukPhonePattern.test(cleanPhone)) {
+      return false;
+    }
+  }
+  return true;
+}, {
+  message: "Please enter a valid UK phone number",
+  path: ["phone"],
 });
 
 type InvitationForm = z.infer<typeof invitationSchema>;
@@ -102,12 +128,23 @@ const AcceptInvitation = () => {
         gender: data.gender,
         email: data.email || undefined,
         phone: data.phone || undefined,
-        password: data.password || undefined,
+        password: data.password,
       };
 
-      await apiService.acceptInvitation(invitationData);
-      toast.success('Account created successfully! Welcome to our community.');
-      navigate('/dashboard');
+      const response = await apiService.acceptInvitation(invitationData);
+      
+      // Auto-login the user after successful invitation acceptance
+      if (response.data.token) {
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user_data', JSON.stringify(response.data.user));
+      }
+      
+      toast.success('Account created successfully! Welcome to the community.');
+      
+      // Redirect based on user role
+      const userRole = response.data.user.role?.toLowerCase();
+      const isAdmin = userRole === 'admin' || userRole === 'subadmin';
+      navigate(isAdmin ? '/admin/dashboard' : '/events?filter=ongoing');
     } catch (error: any) {
       toast.error(error.message || 'Failed to accept invitation');
     } finally {
@@ -122,7 +159,7 @@ const AcceptInvitation = () => {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-islamic rounded-full">
-                <Building2 className="h-8 w-8 text-white" />
+                <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-8 w-8 object-contain" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-primary mb-2">Assalatur Rahman</h1>
@@ -151,7 +188,7 @@ const AcceptInvitation = () => {
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="p-3 bg-gradient-islamic rounded-full">
-                <Building2 className="h-8 w-8 text-white" />
+                <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-8 w-8 object-contain" />
               </div>
             </div>
             <h1 className="text-2xl font-bold text-primary mb-2">Assalatur Rahman</h1>
@@ -176,7 +213,7 @@ const AcceptInvitation = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-3 bg-gradient-islamic rounded-full">
-              <Building2 className="h-8 w-8 text-white" />
+              <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-primary mb-2">Assalatur Rahman</h1>

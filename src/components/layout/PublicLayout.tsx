@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -21,7 +21,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group">
               <div className="p-2 bg-gradient-islamic rounded-lg group-hover:animate-islamic-glow transition-all">
-                <Building2 className="h-6 w-6 text-white" />
+                <img src="/src/assets/mosque-logo.png" alt="Assalatur Rahman Logo" className="h-6 w-6 object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold text-primary">Assalatur Rahman</h1>
@@ -31,12 +31,6 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-6">
-              <Link to="/events" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
-                <span>Events</span>
-              </Link>
-              <Link to="/community" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
-                <span>Community</span>
-              </Link>
               {isAuthenticated && (
                 <>
                   {isAdmin && (
@@ -49,6 +43,12 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
                   </Link>
                 </>
               )}
+              <Link to="/events" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+                <span>Events</span>
+              </Link>
+              <Link to="/community" className="flex items-center space-x-2 text-foreground hover:text-primary transition-colors">
+                <span>Community</span>
+              </Link>
             </div>
 
             {/* Auth Buttons */}

@@ -18,6 +18,9 @@ const CreateEvent = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [registrationRequired, setRegistrationRequired] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const createEventMutation = useMutation({
     mutationFn: (data: CreateEventData) => apiService.createEvent(data),
@@ -36,17 +39,20 @@ const CreateEvent = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     
+    const maxAttendeesValue = formData.get('maxAttendees') as string;
+    const registrationDeadlineValue = formData.get('registrationDeadline') as string;
+    
     const eventData: CreateEventData = {
       title: formData.get('title') as string,
       description: formData.get('description') as string,
       startDate: new Date(formData.get('startDate') as string).toISOString(),
       endDate: new Date(formData.get('endDate') as string).toISOString(),
       location: formData.get('location') as string,
-      maxAttendees: parseInt(formData.get('maxAttendees') as string),
+      maxAttendees: registrationRequired && maxAttendeesValue ? parseInt(maxAttendeesValue) : undefined,
       category: (formData.get('category') as string).toUpperCase(),
-      registrationRequired: formData.get('registrationRequired') === 'true',
-      registrationDeadline: formData.get('registrationDeadline') 
-        ? new Date(formData.get('registrationDeadline') as string).toISOString()
+      registrationRequired: registrationRequired,
+      registrationDeadline: registrationRequired && registrationDeadlineValue 
+        ? new Date(registrationDeadlineValue).toISOString()
         : undefined,
     };
 
@@ -68,6 +74,36 @@ const CreateEvent = () => {
     setImagePreview(null);
     const fileInput = document.getElementById('image') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
+  };
+
+  // Date validation helpers
+  const getMinStartDate = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const getMinEndDate = () => {
+    if (!startDate) return getMinStartDate();
+    return startDate;
+  };
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    setStartDate(newStartDate);
+    
+    // If end date is before new start date, clear it
+    if (endDate && newStartDate && endDate < newStartDate) {
+      setEndDate('');
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
   };
 
   return (
@@ -130,7 +166,7 @@ const CreateEvent = () => {
                           <SelectItem value="community">Community</SelectItem>
                           <SelectItem value="education">Education</SelectItem>
                           <SelectItem value="charity">Charity</SelectItem>
-                          <SelectItem value="celebration">Celebration</SelectItem>
+                          <SelectItem value="social">Social</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -161,6 +197,9 @@ const CreateEvent = () => {
                         id="startDate"
                         name="startDate"
                         type="datetime-local"
+                        min={getMinStartDate()}
+                        value={startDate}
+                        onChange={handleStartDateChange}
                         required
                       />
                     </div>
@@ -171,6 +210,9 @@ const CreateEvent = () => {
                         id="endDate"
                         name="endDate"
                         type="datetime-local"
+                        min={getMinEndDate()}
+                        value={endDate}
+                        onChange={handleEndDateChange}
                         required
                       />
                     </div>
@@ -185,32 +227,52 @@ const CreateEvent = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-2">
-                    <Switch id="registrationRequired" name="registrationRequired" value="true" defaultChecked />
+                    <Switch 
+                      id="registrationRequired" 
+                      name="registrationRequired" 
+                      value="true" 
+                      checked={registrationRequired}
+                      onCheckedChange={setRegistrationRequired}
+                    />
                     <Label htmlFor="registrationRequired">Registration Required</Label>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="maxAttendees">Maximum Attendees</Label>
-                      <Input
-                        id="maxAttendees"
-                        name="maxAttendees"
-                        type="number"
-                        min="1"
-                        placeholder="100"
-                        defaultValue="100"
-                      />
-                    </div>
+                  {registrationRequired && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="maxAttendees">Maximum Attendees</Label>
+                        <Input
+                          id="maxAttendees"
+                          name="maxAttendees"
+                          type="number"
+                          min="1"
+                          placeholder="100"
+                          defaultValue="100"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Leave empty for unlimited attendees
+                        </p>
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="registrationDeadline">Registration Deadline</Label>
-                      <Input
-                        id="registrationDeadline"
-                        name="registrationDeadline"
-                        type="datetime-local"
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="registrationDeadline">Registration Deadline</Label>
+                        <Input
+                          id="registrationDeadline"
+                          name="registrationDeadline"
+                          type="datetime-local"
+                          min={getMinStartDate()}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {!registrationRequired && (
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        When registration is not required, attendees can check in directly without pre-registration.
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
